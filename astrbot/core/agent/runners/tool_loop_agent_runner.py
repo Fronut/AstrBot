@@ -214,6 +214,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         # enforce max turns, will discard older turns when exceeded BEFORE compression
         # -1 means no limit
         enforce_max_turns: int = -1,
+        compression_threshold: float = 0.82,
         # llm compressor
         llm_compress_instruction: str | None = None,
         llm_compress_keep_recent_ratio: float = 0.15,
@@ -233,6 +234,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         self.req = request
         self.streaming = streaming
         self.enforce_max_turns = enforce_max_turns
+        self.compression_threshold = compression_threshold
         self.llm_compress_instruction = llm_compress_instruction
         self.llm_compress_keep_recent_ratio = llm_compress_keep_recent_ratio
         self.llm_compress_provider = llm_compress_provider
@@ -246,6 +248,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         self.request_context_manager_config = ContextConfig(
             # <=0 disables token-based guarding.
             max_context_tokens=provider.provider_config.get("max_context_tokens", 0),
+            compression_threshold=self.compression_threshold,
             # Enforce max turns before token-based guarding.
             enforce_max_turns=self.enforce_max_turns,
             truncate_turns=self.truncate_turns,

@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from astrbot.core import logger
+from astrbot.core.agent.context.config import resolve_compression_threshold
 from astrbot.core.agent.handoff import HandoffTool
 from astrbot.core.agent.mcp_client import MCPTool
 from astrbot.core.agent.message import TextPart
@@ -178,6 +179,12 @@ class MainAgentBuildConfig:
     """The API key for Moonshot AI file extraction provider."""
     context_limit_reached_strategy: str = "truncate_by_turns"
     """The strategy to handle context length limit reached."""
+    compression_threshold_mode: str = "percentage"
+    """How percentage and output-reserve compression thresholds are combined."""
+    compression_threshold_percentage: float = 0.82
+    """User-defined context usage threshold."""
+    compression_max_output_tokens: int = 0
+    """Maximum output budget override. Zero uses model metadata."""
     llm_compress_instruction: str = ""
     """The instruction for compression in llm_compress strategy."""
     llm_compress_keep_recent_ratio: float = 0.15
@@ -1605,6 +1612,28 @@ async def build_main_agent(
                 config.fallback_max_context_tokens
             )
 
+    model_info = LLM_METADATAS.get(provider.get_model())
+    metadata_output_tokens = (
+        int(model_info.get("limit", {}).get("output", 0)) if model_info else 0
+    )
+    configured_output_tokens = max(0, config.compression_max_output_tokens)
+    threshold_result = resolve_compression_threshold(
+        mode=config.compression_threshold_mode,
+        percentage=config.compression_threshold_percentage,
+        max_context_tokens=int(
+            provider.provider_config.get("max_context_tokens", 0) or 0
+        ),
+        max_output_tokens=configured_output_tokens or metadata_output_tokens,
+    )
+    if threshold_result["fallback_reason"]:
+        logger.warning(
+            "Compression threshold mode %s requires max output tokens, but no "
+            "override or model metadata is available for %s; using %.0f%%.",
+            threshold_result["mode"],
+            provider.get_model(),
+            threshold_result["effective_threshold"] * 100,
+        )
+
     if event.get_platform_name() == "webchat":
         asyncio.create_task(_handle_webchat(event, req, provider))
 
@@ -1645,6 +1674,7 @@ async def build_main_agent(
         tool_executor=FunctionToolExecutor(),
         agent_hooks=MAIN_AGENT_HOOKS,
         streaming=config.streaming_response,
+        compression_threshold=threshold_result["effective_threshold"],
         llm_compress_instruction=config.llm_compress_instruction,
         llm_compress_keep_recent_ratio=config.llm_compress_keep_recent_ratio,
         llm_compress_provider=_get_compress_provider(config, plugin_context, event),

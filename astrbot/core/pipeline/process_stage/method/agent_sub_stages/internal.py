@@ -94,6 +94,15 @@ class InternalAgentSubStage(Stage):
         self.context_limit_reached_strategy: str = settings.get(
             "context_limit_reached_strategy", "truncate_by_turns"
         )
+        self.compression_threshold_mode: str = settings.get(
+            "compression_threshold_mode", "percentage"
+        )
+        self.compression_threshold_percentage: float = settings.get(
+            "compression_threshold_percentage", 0.82
+        )
+        self.compression_max_output_tokens: int = settings.get(
+            "compression_max_output_tokens", 0
+        )
         self.llm_compress_instruction: str = settings.get(
             "llm_compress_instruction", ""
         )
@@ -137,6 +146,9 @@ class InternalAgentSubStage(Stage):
             file_extract_prov=self.file_extract_prov,
             file_extract_msh_api_key=self.file_extract_msh_api_key,
             context_limit_reached_strategy=self.context_limit_reached_strategy,
+            compression_threshold_mode=self.compression_threshold_mode,
+            compression_threshold_percentage=self.compression_threshold_percentage,
+            compression_max_output_tokens=self.compression_max_output_tokens,
             llm_compress_instruction=self.llm_compress_instruction,
             llm_compress_keep_recent_ratio=self.llm_compress_keep_recent_ratio,
             llm_compress_provider_id=self.llm_compress_provider_id,
