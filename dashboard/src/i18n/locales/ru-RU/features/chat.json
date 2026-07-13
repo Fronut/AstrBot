@@ -158,7 +158,7 @@
   },
   "tokenUsage": {
     "tooltip": "{used} / {limit} токенов ({percent}%)",
-    "tooltipWithReserve": "Использовано {used} / {limit} ({percent}%); резерв вывода {reserve}; фактически свободно {free}"
+    "tooltipWithThreshold": "Использовано {used} / {limit} ({percent}%); фактический порог сжатия на сервере {threshold}"
   },
   "refs": {
     "title": "Ссылки",

@@ -601,7 +601,6 @@ import type { Locale } from "@/i18n/types";
 import { askForConfirmation, useConfirmDialog } from "@/utils/confirmDialog";
 import {
   contextLimit,
-  outputTokenReserve,
   formatTokenCount,
   type ProviderModelMetadata,
   type ProviderMetadataSource,
@@ -666,6 +665,10 @@ interface TokenProviderConfig extends ProviderMetadataSource {
   enable?: boolean;
 }
 
+interface CompressionThresholdResult {
+  effective_threshold: number;
+}
+
 const activeWorkspace = ref<WorkspaceView>("chat");
 const projectDialogOpen = ref(false);
 const editingProject = ref<Project | null>(null);
@@ -686,6 +689,9 @@ const loadingSessions = ref(false);
 const draft = ref("");
 const tokenProviderConfigs = ref<TokenProviderConfig[]>([]);
 const tokenModelMetadata = ref<Record<string, ProviderModelMetadata>>({});
+const tokenCompressionThresholds = ref<
+  Record<string, CompressionThresholdResult>
+>({});
 const selectedTokenProviderId = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
 const inputRef = ref<InstanceType<typeof ChatInput> | null>(null);
@@ -868,6 +874,16 @@ const currentTokenMetadata = computed(() => {
   const model = currentTokenProvider.value?.model;
   return model ? tokenModelMetadata.value[model] || null : null;
 });
+const currentCompressionThreshold = computed(() => {
+  const providerId = currentTokenProvider.value?.id;
+  if (!providerId) return null;
+  const threshold = Number(
+    tokenCompressionThresholds.value[providerId]?.effective_threshold,
+  );
+  return Number.isFinite(threshold) && threshold >= 0 && threshold <= 1
+    ? threshold
+    : null;
+});
 const latestContextTokens = computed(() => {
   for (let index = activeMessages.value.length - 1; index >= 0; index -= 1) {
     const message = activeMessages.value[index];
@@ -892,26 +908,24 @@ const tokenUsageIndicator = computed(() => {
   const limit = contextLimit(currentTokenProvider.value, currentTokenMetadata.value);
   if (used <= 0 || limit <= 0) return null;
 
-  const reserve = outputTokenReserve(used, limit, currentTokenMetadata.value);
-  const free = Math.max(0, limit - used - reserve);
   const percent = (used / limit) * 100;
-  const reservedPercent = ((used + reserve) / limit) * 100;
+  const threshold = currentCompressionThreshold.value;
+  const thresholdTokens = threshold == null ? null : Math.round(limit * threshold);
   return {
     used,
     limit,
     percent: Math.min(100, Math.max(0, percent)),
-    reservedPercent: Math.min(100, Math.max(0, reservedPercent)),
+    thresholdPercent: threshold == null ? undefined : threshold * 100,
     tooltip:
-      reserve > 0
-        ? tm("tokenUsage.tooltipWithReserve", {
+      thresholdTokens == null
+        ? tm("tokenUsage.tooltip", {
             used: formatTokenCount(used),
-            reserve: formatTokenCount(reserve),
-            free: formatTokenCount(free),
             limit: formatTokenCount(limit),
             percent: formatUsagePercent(percent),
           })
-        : tm("tokenUsage.tooltip", {
+        : tm("tokenUsage.tooltipWithThreshold", {
             used: formatTokenCount(used),
+            threshold: formatTokenCount(thresholdTokens),
             limit: formatTokenCount(limit),
             percent: formatUsagePercent(percent),
           }),
@@ -1042,9 +1056,13 @@ async function loadTokenProviders() {
   try {
     const response = await providerApi.listByProviderType("chat_completion");
     if (response.data.status === "ok") {
-      tokenModelMetadata.value = (
-        (response.data as any).model_metadata || {}
-      ) as Record<string, ProviderModelMetadata>;
+      tokenModelMetadata.value = (response.data.model_metadata || {}) as Record<
+        string,
+        ProviderModelMetadata
+      >;
+      tokenCompressionThresholds.value = (
+        response.data.compression_thresholds || {}
+      ) as Record<string, CompressionThresholdResult>;
       tokenProviderConfigs.value = (
         (response.data.data || []) as unknown as TokenProviderConfig[]
       ).filter((provider) => provider.enable !== false);

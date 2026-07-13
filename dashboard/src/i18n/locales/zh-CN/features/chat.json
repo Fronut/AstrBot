@@ -158,7 +158,7 @@
   },
   "tokenUsage": {
     "tooltip": "{used} / {limit} tokens（{percent}%）",
-    "tooltipWithReserve": "已用 {used} / {limit}（{percent}%）；生成预留 {reserve}；实际可用 {free}"
+    "tooltipWithThreshold": "已用 {used} / {limit}（{percent}%）；后端实际压缩边界 {threshold}"
   },
   "refs": {
     "title": "引用",

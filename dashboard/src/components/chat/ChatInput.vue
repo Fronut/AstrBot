@@ -254,12 +254,12 @@
                 :style="{ '--token-usage-color': tokenUsageColor }"
               >
                 <v-progress-circular
-                  v-if="tokenUsageReservedPercent > tokenUsagePercent"
+                  v-if="tokenUsageThresholdPercent > tokenUsagePercent"
                   aria-hidden="true"
-                  :model-value="tokenUsageReservedPercent"
+                  :model-value="tokenUsageThresholdPercent"
                   size="24"
                   width="2.5"
-                  class="token-usage-progress token-usage-progress--reserved"
+                  class="token-usage-progress token-usage-progress--threshold"
                 />
                 <v-progress-circular
                   :model-value="tokenUsagePercent"
@@ -269,7 +269,7 @@
                   class="token-usage-progress"
                   :class="{
                     'token-usage-progress--used':
-                      tokenUsageReservedPercent > tokenUsagePercent,
+                      tokenUsageThresholdPercent > tokenUsagePercent,
                   }"
                 />
               </span>
@@ -370,7 +370,7 @@ interface TokenUsageInfo {
   used: number;
   limit: number;
   percent: number;
-  reservedPercent?: number;
+  thresholdPercent?: number;
   tooltip: string;
 }
 
@@ -630,8 +630,8 @@ const tokenUsagePercent = computed(() => {
   return Math.min(100, Math.max(0, percent));
 });
 
-const tokenUsageReservedPercent = computed(() => {
-  const percent = props.tokenUsage?.reservedPercent ?? tokenUsagePercent.value;
+const tokenUsageThresholdPercent = computed(() => {
+  const percent = props.tokenUsage?.thresholdPercent ?? tokenUsagePercent.value;
   if (!Number.isFinite(percent)) return tokenUsagePercent.value;
   return Math.min(100, Math.max(tokenUsagePercent.value, percent));
 });
@@ -1101,7 +1101,7 @@ defineExpose({
   transition: stroke-dashoffset 0.35s ease;
 }
 
-.token-usage-progress--reserved {
+.token-usage-progress--threshold {
   color: rgba(var(--v-theme-on-surface), 0.28);
 }
 

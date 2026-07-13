@@ -158,7 +158,7 @@
   },
   "tokenUsage": {
     "tooltip": "{used} / {limit} tokens ({percent}%)",
-    "tooltipWithReserve": "Used {used} / {limit} ({percent}%); output reserve {reserve}; actually free {free}"
+    "tooltipWithThreshold": "Used {used} / {limit} ({percent}%); backend compression boundary {threshold}"
   },
   "refs": {
     "title": "References",
