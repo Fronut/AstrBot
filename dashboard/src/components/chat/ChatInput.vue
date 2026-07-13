@@ -254,10 +254,23 @@
                 :style="{ '--token-usage-color': tokenUsageColor }"
               >
                 <v-progress-circular
+                  v-if="tokenUsageReservedPercent > tokenUsagePercent"
+                  aria-hidden="true"
+                  :model-value="tokenUsageReservedPercent"
+                  size="24"
+                  width="2.5"
+                  class="token-usage-progress token-usage-progress--reserved"
+                />
+                <v-progress-circular
                   :model-value="tokenUsagePercent"
+                  :aria-label="props.tokenUsage?.tooltip"
                   size="24"
                   width="2.5"
                   class="token-usage-progress"
+                  :class="{
+                    'token-usage-progress--used':
+                      tokenUsageReservedPercent > tokenUsagePercent,
+                  }"
                 />
               </span>
             </template>
@@ -357,6 +370,7 @@ interface TokenUsageInfo {
   used: number;
   limit: number;
   percent: number;
+  reservedPercent?: number;
   tooltip: string;
 }
 
@@ -614,6 +628,12 @@ const tokenUsagePercent = computed(() => {
   const percent = props.tokenUsage?.percent || 0;
   if (!Number.isFinite(percent)) return 0;
   return Math.min(100, Math.max(0, percent));
+});
+
+const tokenUsageReservedPercent = computed(() => {
+  const percent = props.tokenUsage?.reservedPercent ?? tokenUsagePercent.value;
+  if (!Number.isFinite(percent)) return tokenUsagePercent.value;
+  return Math.min(100, Math.max(tokenUsagePercent.value, percent));
 });
 
 const tokenUsageColor = computed(() =>
@@ -1068,10 +1088,29 @@ defineExpose({
   flex: 0 0 24px;
   border-radius: 50%;
   color: var(--token-usage-color);
+  position: relative;
 }
 
 .token-usage-progress {
   color: currentColor;
+  position: absolute;
+  inset: 0;
+}
+
+.token-usage-progress :deep(.v-progress-circular__overlay) {
+  transition: stroke-dashoffset 0.35s ease;
+}
+
+.token-usage-progress--reserved {
+  color: rgba(var(--v-theme-on-surface), 0.28);
+}
+
+.token-usage-progress--used {
+  color: var(--token-usage-color);
+}
+
+.token-usage-progress--used :deep(.v-progress-circular__underlay) {
+  stroke: transparent;
 }
 
 .token-usage-progress :deep(.v-progress-circular__underlay) {

@@ -157,7 +157,8 @@
     "ttft": "首字时间"
   },
   "tokenUsage": {
-    "tooltip": "{used} / {limit} tokens（{percent}%）"
+    "tooltip": "{used} / {limit} tokens（{percent}%）",
+    "tooltipWithReserve": "已用 {used} / {limit}（{percent}%）；生成预留 {reserve}；实际可用 {free}"
   },
   "refs": {
     "title": "引用",

@@ -601,6 +601,7 @@ import type { Locale } from "@/i18n/types";
 import { askForConfirmation, useConfirmDialog } from "@/utils/confirmDialog";
 import {
   contextLimit,
+  outputTokenReserve,
   formatTokenCount,
   type ProviderModelMetadata,
   type ProviderMetadataSource,
@@ -891,16 +892,29 @@ const tokenUsageIndicator = computed(() => {
   const limit = contextLimit(currentTokenProvider.value, currentTokenMetadata.value);
   if (used <= 0 || limit <= 0) return null;
 
+  const reserve = outputTokenReserve(used, limit, currentTokenMetadata.value);
+  const free = Math.max(0, limit - used - reserve);
   const percent = (used / limit) * 100;
+  const reservedPercent = ((used + reserve) / limit) * 100;
   return {
     used,
     limit,
     percent: Math.min(100, Math.max(0, percent)),
-    tooltip: tm("tokenUsage.tooltip", {
-      used: formatTokenCount(used),
-      limit: formatTokenCount(limit),
-      percent: formatUsagePercent(percent),
-    }),
+    reservedPercent: Math.min(100, Math.max(0, reservedPercent)),
+    tooltip:
+      reserve > 0
+        ? tm("tokenUsage.tooltipWithReserve", {
+            used: formatTokenCount(used),
+            reserve: formatTokenCount(reserve),
+            free: formatTokenCount(free),
+            limit: formatTokenCount(limit),
+            percent: formatUsagePercent(percent),
+          })
+        : tm("tokenUsage.tooltip", {
+            used: formatTokenCount(used),
+            limit: formatTokenCount(limit),
+            percent: formatUsagePercent(percent),
+          }),
   };
 });
 

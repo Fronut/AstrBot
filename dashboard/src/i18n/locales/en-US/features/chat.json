@@ -157,7 +157,8 @@
     "ttft": "Time to First Token"
   },
   "tokenUsage": {
-    "tooltip": "{used} / {limit} tokens ({percent}%)"
+    "tooltip": "{used} / {limit} tokens ({percent}%)",
+    "tooltipWithReserve": "Used {used} / {limit} ({percent}%); output reserve {reserve}; actually free {free}"
   },
   "refs": {
     "title": "References",

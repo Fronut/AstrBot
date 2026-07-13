@@ -157,7 +157,8 @@
     "ttft": "Время до первого токена"
   },
   "tokenUsage": {
-    "tooltip": "{used} / {limit} токенов ({percent}%)"
+    "tooltip": "{used} / {limit} токенов ({percent}%)",
+    "tooltipWithReserve": "Использовано {used} / {limit} ({percent}%); резерв вывода {reserve}; фактически свободно {free}"
   },
   "refs": {
     "title": "Ссылки",

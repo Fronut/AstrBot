@@ -2,7 +2,7 @@ export interface ProviderModelMetadata {
   modalities?: { input?: string[] }
   tool_call?: boolean
   reasoning?: boolean
-  limit?: { context?: number }
+  limit?: { context?: number; output?: number }
 }
 
 export interface ProviderMetadataSource {
@@ -25,6 +25,17 @@ export function contextLimit(
 ): number {
   const context = Number(metadata?.limit?.context || provider?.max_context_tokens || 0)
   return Number.isFinite(context) && context > 0 ? context : 0
+}
+
+export function outputTokenReserve(
+  used: number,
+  limit: number,
+  metadata?: ProviderModelMetadata | null
+): number {
+  const output = Number(metadata?.limit?.output || 0)
+  if (!Number.isFinite(used) || !Number.isFinite(limit) || limit <= 0) return 0
+  if (!Number.isFinite(output) || output <= 0) return 0
+  return Math.min(output, Math.max(0, limit - Math.max(0, used)))
 }
 
 export function formatTokenCount(value: number): string {
